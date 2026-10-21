@@ -58,20 +58,21 @@ const TD=K(D),esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<"
 const DEF=()=>({name:"",ac:"#10b981",theme:"auto",log:{},notes:{},
 habits:[["☀️","Bangun, minum air, bersih diri","05.00"],["🕌","Ibadah / waktu tenang",""],["🏃","Gerak ringan 15–30 menit",""],["📚","Belajar skill 60 menit",""],["💼","Satu langkah karier / penghasilan",""],["🥗","Makan tanpa layar",""],["📝","Tulis 3 prioritas besok",""],["😴","Tidur tepat waktu","21.00"]].map((x,i)=>({id:"h"+i,e:x[0],t:x[1],m:x[2]})),
 goals:[["💼","Lamaran / penawaran terkirim",0,5,"kali"],["🎬","Konten dibuat",0,7,"buah"],["📚","Jam belajar",0,10,"jam"]].map((x,i)=>({id:"g"+i,e:x[0],t:x[1],c:x[2],g:x[3],u:x[4]}))});
-function load(){try{const j=localStorage.getItem("hp1");if(j){const o=JSON.parse(j);if(o&&o.habits)return o}}catch(e){}return DEF()}
+function load(){let b=null;const t=j=>{try{const o=JSON.parse(j);if(o&&o.habits&&(!b||(o.ts||0)>(b.ts||0)))b=o}catch(e){}};try{t(localStorage.getItem("hp1"))}catch(e){}try{if(window.name.indexOf("HP1:")==0)t(window.name.slice(4))}catch(e){}return b||DEF()}
 let S=load(),tab="h",ed=false,wo=0,rs=false,io="",cd=TD;
 let ST="📱 Tersimpan di perangkat",DB=null,tmr;
 const lsOK=(()=>{try{localStorage.setItem("hp_t","1");localStorage.removeItem("hp_t");return true}catch(e){return false}})();
 const WARN="⚠️ Belum tersimpan, Ekspor data";
-if(!lsOK)ST=WARN;
+if(!lsOK)ST="⚠️ Penyimpanan terbatas, Ekspor data";
 const paintST=()=>{document.querySelectorAll("#st1").forEach(e=>e.textContent=ST)};
-const save=()=>{S.ts=Date.now();try{localStorage.setItem("hp1",JSON.stringify(S))}catch(e){}
+const save=()=>{S.ts=Date.now();const j=JSON.stringify(S);try{localStorage.setItem("hp1",j)}catch(e){}try{window.name="HP1:"+j}catch(e){}try{window.storage&&window.storage.set("hp1",j)}catch(e){}
 clearTimeout(tmr);tmr=setTimeout(async()=>{if(!DB){paintST();return}try{await DB.set({j:JSON.stringify(S),ts:S.ts});ST="☁️ Tersimpan di akun & perangkat"}catch(e){ST=lsOK?"📱 Tersimpan di perangkat":WARN}paintST()},700)};
 try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
 (async()=>{try{const u=await claude.use("user"),d=await claude.use("db");if(!u||!d)return;const id=await u.id();if(!id)return;
 DB=d.collection("data/users/"+id).doc("state");const s=await DB.get();
 if(s.exists&&s.data().ts>(S.ts||0)){const o=JSON.parse(s.data().j);if(o&&o.habits){S=o;try{localStorage.setItem("hp1",s.data().j)}catch(e){}}}else save();
 ST="☁️ Tersimpan di akun & perangkat";render()}catch(e){}})();
+(async()=>{if(!window.storage)return;if(!DB&&!lsOK){ST="📱 Tersimpan di perangkat";paintST()}try{const r=await window.storage.get("hp1");if(r&&r.value){const o=JSON.parse(r.value);if(o&&o.habits&&(o.ts||0)>(S.ts||0)){S=o;render()}}}catch(e){}})();
 const pct=k=>{const n=S.habits.length;if(!n)return 0;const a=(S.log[k]||[]).filter(i=>S.habits.some(h=>h.id==i));return a.length/n};
 function streak(){let s=0,d=new Date(D);if(pct(K(d))<.6)d.setDate(d.getDate()-1);while(s<400&&pct(K(d))>=.6){s++;d.setDate(d.getDate()-1)}return s}
 function weekDays(o){const d=new Date(D);d.setDate(d.getDate()-((d.getDay()+6)%7)+o*7);return[...Array(7)].map((_,i)=>{const x=new Date(d);x.setDate(d.getDate()+i);return x})}
